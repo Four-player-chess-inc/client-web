@@ -1,0 +1,65 @@
+<html>
+    <head>
+        <meta charset="utf-8">
+        <script>
+        document.addEventListener('DOMContentLoaded', function(){
+            
+            reg_name = document.getElementById("reg_name");
+            reg_name.value = Math.random();
+
+            name_submit = document.getElementById("name_submit");
+            name_submit.onclick = event => {
+                reg = {
+                    "matchmaking_queue": {
+                        "player_register": {
+                            "name": reg_name.value
+                        }
+                    }
+                };
+                reg = JSON.stringify(reg);
+                console.log('send ', reg);
+                webSocket.send(reg);
+            }
+
+            function process_msg(msg) {
+                msg = JSON.parse(msg);
+                //console.log(msg);
+                
+                if (msg?.matchmaking_queue?.heartbeat_check) {
+                    hb = {
+                        "matchmaking_queue": {
+                            "heartbeat_check": {}
+                        }    
+                    };
+                    hb = JSON.stringify(hb);
+                    console.log('send ', hb);
+                    webSocket.send(hb);
+                }
+            }
+
+            const webSocket = new WebSocket('ws://localhost:8080');
+
+            webSocket.onopen = event => {
+                console.log('websock open')
+            };
+
+            webSocket.onmessage = event => {
+                console.log('recv ',  event.data);
+                process_msg(event.data)
+            };
+
+            webSocket.onclose = event => {
+                console.log('websock close');
+            };
+            
+            webSocket.onerror = event => {
+                console.error('onerror, ',  event);    
+            };
+        });
+        </script>
+    </head>
+    <body>
+        <input type="text"  value="" id="reg_name" />
+        <input type="button" value="register" id="name_submit"> 
+    </body>
+</html>
