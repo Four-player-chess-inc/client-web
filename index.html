@@ -8,7 +8,7 @@
             reg_name.value = Math.random();
 
             name_submit = document.getElementById("name_submit");
-            name_submit.onclick = event => {
+            name_submit.onclick = event => {                
                 reg = {
                     "matchmaking_queue": {
                         "player_register": {
@@ -17,8 +17,38 @@
                     }
                 };
                 reg = JSON.stringify(reg);
-                console.log('send ', reg);
-                webSocket.send(reg);
+                websocket.send_logged(reg);
+            }
+            make_move = document.getElementById("make_move");
+            make_move.onclick = event => {                
+                move = {
+                    "game_session": {
+                        "move": { 
+                            "make": [
+                                {
+                                    "from": {
+                                        "letter": "E",
+                                        "number": 2
+                                    },
+                                    "to": {
+                                        "letter": "E",
+                                        "number": 4
+                                    },
+                                    "action": {}
+                                }        
+                            ]
+                        }
+                    }
+                };
+                move = JSON.stringify(move);
+                websocket.send_logged(move);
+            }
+            
+            text_area = document.getElementById("ta");
+            text_area_submit = document.getElementById("sub");
+            text_area_submit.onclick = event => {
+                console.log('send');
+                websocket.send_logged(text_area.value);
             }
 
             function process_msg(msg) {
@@ -32,27 +62,46 @@
                         }    
                     };
                     hb = JSON.stringify(hb);
-                    console.log('send ', hb);
-                    webSocket.send(hb);
+                    websocket.send_logged(hb);
                 }
             }
 
-            const webSocket = new WebSocket('ws://localhost:8080');
+            const websocket = new WebSocket('ws://localhost:8080');
 
-            webSocket.onopen = event => {
+            WebSocket.prototype.send_logged = function(data) {
+                console.log(new Date(Date.now()).toISOString() + ' %c Send %c' + data, "color: red;");
+                this.send(data);
+            };
+
+            websocket.onopen = event => {
                 console.log('websock open')
+                connect = {
+                    "handshake": {
+                        "connect" : {
+                            "client" : {
+                                "name": "fpc-client-web",
+                                "version": "0.0.1",
+                                "protocol": {
+                                    "version": "0"
+                                }
+                            }
+                        }
+                    }
+                };
+                connect = JSON.stringify(connect);
+                websocket.send_logged(connect);
             };
 
-            webSocket.onmessage = event => {
-                console.log('recv ',  event.data);
-                process_msg(event.data)
-            };
-
-            webSocket.onclose = event => {
+            websocket.onclose = event => {
                 console.log('websock close');
             };
+
+            websocket.onmessage = event => {
+                    console.log(new Date(Date.now()).toISOString() + ' %c Recv %c' + event.data, "color: blue;");
+                    process_msg(event.data)
+            };
             
-            webSocket.onerror = event => {
+            websocket.onerror = event => {
                 console.error('onerror, ',  event);    
             };
         });
@@ -61,5 +110,8 @@
     <body>
         <input type="text"  value="" id="reg_name" />
         <input type="button" value="register" id="name_submit"> 
+        <input type="button" value="make move" id="make_move">
+        <textarea cols="100" rows="30" id="ta"></textarea>
+        <input type="submit" id="sub"/>
     </body>
 </html>
